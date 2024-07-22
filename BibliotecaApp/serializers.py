@@ -5,7 +5,7 @@ from .models import Alumno, Libro, Notificacion, Prestamo, Reporte, Reserva, Usu
 class AlumnoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Alumno
-        fields = ['dni','estado']
+        fields = ['dni', 'nombres', 'apellidoPat', 'apellidoMat', 'estado']
 
 class LibroSerializer(serializers.ModelSerializer):
     class Meta:
