@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inicio de sesión</title>
+</head>
+<body>
+    <h2>Inicio de sesión</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Iniciar sesión</button>
+    </form>
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+</body>
+</html>
