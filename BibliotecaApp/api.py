@@ -1,7 +1,7 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
 from .models import Alumno, Libro, Notificacion, Reporte, Usuario, Reserva, Prestamo
-from .serializers import AlumnoSerializer, LibroSerializer, NotificacionSerializer, PrestamoCreateSerializer, ReporteSerializer, ReservaCreateSerializer, UsuarioSerializer, ReservaSerializer, PrestamoSerializer
+from .serializers import ReservaUpdateSerializer, AlumnoSerializer, LibroSerializer, NotificacionSerializer, PrestamoCreateSerializer, PrestamoUpdateSerializer, ReporteSerializer, ReservaCreateSerializer, UsuarioSerializer, ReservaSerializer, PrestamoSerializer
 
 class AlumnoViewSet(viewsets.ModelViewSet):
     queryset = Alumno.objects.all()
@@ -28,6 +28,8 @@ class ReservaViewSet(viewsets.ModelViewSet):
     def get_serializer_class(self):
         if self.action == 'create':
             return ReservaCreateSerializer
+        elif self.action == 'update':
+            return ReservaUpdateSerializer
         return ReservaSerializer
 
     def create(self, request, *args, **kwargs):
@@ -36,12 +38,22 @@ class ReservaViewSet(viewsets.ModelViewSet):
         reserva = serializer.save()
         return Response(ReservaSerializer(reserva).data, status=status.HTTP_201_CREATED)
 
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        reserva = serializer.save()
+        return Response(ReservaSerializer(reserva).data)
+
 class PrestamoViewSet(viewsets.ModelViewSet):
     queryset = Prestamo.objects.all()
 
     def get_serializer_class(self):
         if self.action == 'create':
             return PrestamoCreateSerializer
+        elif self.action == 'update':
+            return PrestamoUpdateSerializer
         return PrestamoSerializer
 
     def create(self, request, *args, **kwargs):
@@ -49,3 +61,11 @@ class PrestamoViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         prestamo = serializer.save()
         return Response(PrestamoSerializer(prestamo).data, status=status.HTTP_201_CREATED)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        prestamo = serializer.save()
+        return Response(PrestamoSerializer(prestamo).data)

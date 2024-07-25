@@ -28,7 +28,7 @@ class Alumno(models.Model):
 
 class Libro(models.Model):
     isbn = models.CharField(max_length=13, primary_key=True, unique=True, null=False)
-    titulo = models.CharField()
+    titulo = models.CharField(max_length=150)
     autor = models.CharField(max_length=50)
     categoria = models.CharField(max_length=50)
     cantidad = models.IntegerField(default=0)
