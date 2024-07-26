@@ -36,7 +36,7 @@ class Libro(models.Model):
     
 class Reserva(models.Model):
     fechaReserva = models.DateField()
-    usuarioReserva = models.ForeignKey(Usuario, on_delete=models.CASCADE)
+    alumnoReserva = models.ForeignKey(Alumno, on_delete=models.CASCADE)
     libroReserva = models.ForeignKey(Libro, on_delete=models.CASCADE)
     estado = models.CharField(max_length=20)
     

@@ -51,8 +51,8 @@ class ReservaCreateSerializer(serializers.Serializer):
             raise serializers.ValidationError("Libro no encontrado.")
 
         try:
-            usuario = Usuario.objects.get(dni=dni)
-        except Usuario.DoesNotExist:
+            alumno = Alumno.objects.get(dni=dni)
+        except Alumno.DoesNotExist:
             raise serializers.ValidationError("Alumno no encontrado.")
 
         # Establecer fechas, usar fecha actual y una fecha de devolución por defecto (e.g., 14 días después)
@@ -61,11 +61,51 @@ class ReservaCreateSerializer(serializers.Serializer):
         # Crear prestamo
         reserva = Reserva.objects.create(
             libroReserva=libro, 
-            usuarioReserva=usuario, 
+            alumnoReserva=alumno, 
             fechaReserva=fecha_reserva,
             estado='reservado'  # Asigna un estado por defecto
         )
         return reserva
+
+class ReservaDetailSerializer(serializers.ModelSerializer):
+    libroReserva = LibroSerializer()
+    alumnoReserva = AlumnoSerializer()
+
+    class Meta:
+        model = Reserva
+        fields = ['id', 'libroReserva', 'alumnoReserva', 'fechaReserva', 'estado']
+
+class ReservaUpdateSerializer(serializers.ModelSerializer):
+    isbn = serializers.CharField(max_length=13, required=False, write_only=True)
+    dni = serializers.CharField(max_length=8, required=False, write_only=True)
+
+    class Meta:
+        model = Reserva
+        fields = ['isbn', 'dni', 'fechaReserva', 'estado']
+
+    def to_representation(self, instance):
+        # Este método controla cómo se muestra el objeto en las respuestas
+        return ReservaDetailSerializer(instance).data
+
+    def update(self, instance, validated_data):
+        isbn = validated_data.pop('isbn', None)
+        dni = validated_data.pop('dni', None)
+
+        if isbn:
+            try:
+                libro = Libro.objects.get(isbn=isbn)
+                instance.libroReserva = libro
+            except Libro.DoesNotExist:
+                raise serializers.ValidationError("Libro no encontrado.")
+
+        if dni:
+            try:
+                alumno = Alumno.objects.get(dni=dni)
+                instance.alumnoReserva = alumno
+            except Alumno.DoesNotExist:
+                raise serializers.ValidationError("Alumno no encontrado.")
+
+        return super().update(instance, validated_data)
 
 class PrestamoSerializer(serializers.ModelSerializer):
     alumnoPrestado = AlumnoSerializer()  # Nested serializer for Usuario
@@ -108,63 +148,42 @@ class PrestamoCreateSerializer(serializers.Serializer):
             estado='pendiente'  # Asigna un estado por defecto
         )
         return prestamo
-    
-class ReservaUpdateSerializer(serializers.Serializer):
-    isbn = serializers.CharField(max_length=13)
-    dni = serializers.CharField(max_length=8)
-    fechaReserva = serializers.DateField(required=False)
-    estado = serializers.CharField(max_length=20, required=False)
+
+class PrestamoDetailSerializer(serializers.ModelSerializer):
+    libroPrestado = LibroSerializer()
+    alumnoPrestado = AlumnoSerializer()
+
+    class Meta:
+        model = Prestamo
+        fields = ['id', 'libroPrestado', 'alumnoPrestado', 'fechaPrestamo', 'fechaDevolucion', 'estado']
+
+class PrestamoUpdateSerializer(serializers.ModelSerializer):
+    isbn = serializers.CharField(max_length=13, required=False, write_only=True)
+    dni = serializers.CharField(max_length=8, required=False, write_only=True)
+
+    class Meta:
+        model = Prestamo
+        fields = ['isbn', 'dni', 'fechaPrestamo', 'fechaDevolucion', 'estado']
+
+    def to_representation(self, instance):
+        return PrestamoSerializer(instance).data
 
     def update(self, instance, validated_data):
-        isbn = validated_data.get('isbn', instance.libroReserva.isbn)
-        dni = validated_data.get('dni', instance.usuarioReserva.dni)
+        isbn = validated_data.pop('isbn', None)
+        dni = validated_data.pop('dni', None)
 
-        # Buscar libro y usuario
-        try:
-            libro = Libro.objects.get(isbn=isbn)
-            instance.libroReserva = libro
-        except Libro.DoesNotExist:
-            raise serializers.ValidationError("Libro no encontrado.")
+        if isbn:
+            try:
+                libro = Libro.objects.get(isbn=isbn)
+                instance.libroPrestado = libro
+            except Libro.DoesNotExist:
+                raise serializers.ValidationError("Libro no encontrado.")
 
-        try:
-            usuario = Usuario.objects.get(dni=dni)
-            instance.usuarioReserva = usuario
-        except Usuario.DoesNotExist:
-            raise serializers.ValidationError("Usuario no encontrado.")
+        if dni:
+            try:
+                alumno = Alumno.objects.get(dni=dni)
+                instance.alumnoPrestado = alumno
+            except Alumno.DoesNotExist:
+                raise serializers.ValidationError("Alumno no encontrado.")
 
-        instance.fechaReserva = validated_data.get('fechaReserva', instance.fechaReserva)
-        instance.estado = validated_data.get('estado', instance.estado)
-
-        instance.save()
-        return instance
-
-class PrestamoUpdateSerializer(serializers.Serializer):
-    isbn = serializers.CharField(max_length=13)
-    dni = serializers.CharField(max_length=8)
-    fechaPrestamo = serializers.DateField(required=False)
-    fechaDevolucion = serializers.DateField(required=False)
-    estado = serializers.CharField(max_length=20, required=False)
-
-    def update(self, instance, validated_data):
-        isbn = validated_data.get('isbn', instance.libroPrestado.isbn)
-        dni = validated_data.get('dni', instance.alumnoPrestado.dni)
-
-        # Buscar libro y alumno
-        try:
-            libro = Libro.objects.get(isbn=isbn)
-            instance.libroPrestado = libro
-        except Libro.DoesNotExist:
-            raise serializers.ValidationError("Libro no encontrado.")
-
-        try:
-            alumno = Alumno.objects.get(dni=dni)
-            instance.alumnoPrestado = alumno
-        except Alumno.DoesNotExist:
-            raise serializers.ValidationError("Alumno no encontrado.")
-
-        instance.fechaPrestamo = validated_data.get('fechaPrestamo', instance.fechaPrestamo)
-        instance.fechaDevolucion = validated_data.get('fechaDevolucion', instance.fechaDevolucion)
-        instance.estado = validated_data.get('estado', instance.estado)
-
-        instance.save()
-        return instance
+        return super().update(instance, validated_data)

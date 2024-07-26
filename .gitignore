@@ -16,8 +16,10 @@ local_settings.py
 # Environment variables
 .env
 
+
 # Virtual environment
 venv/
+myenv/
 
 # VS Code
 .vscode/
